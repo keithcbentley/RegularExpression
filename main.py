@@ -39,95 +39,105 @@ from tkinter import *
 from tkinter import ttk
 import re
 
-root = Tk()
-root.title('Regular Expression Playground')
-root['borderwidth'] = 5
-root['background'] = 'yellow'
-root.rowconfigure(0, weight=1)
-root.columnconfigure(0, weight=1)
 
-main_frame = ttk.Frame(root)
-main_frame['relief'] = 'raised'
-main_frame['padding'] = 5
-main_frame.grid(column=0, row=0, sticky=(N,S,E,W))
-main_frame.columnconfigure(0, weight=1)
-main_frame.rowconfigure(0, weight=1)
-main_frame.rowconfigure(1, weight=1)
-main_frame.rowconfigure(2, weight=1)
+class ViewModel:
+    def __init__(self):
+        self.root = Tk()
+        self.root.title('Regular Expression Playground')
+        self.root['borderwidth'] = 5
+        self.root['background'] = 'yellow'
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
 
-input_frame = ttk.Labelframe(main_frame, text='Input')
-input_frame['relief'] = 'raised'
-input_frame['height'] = 50
-input_frame['padding'] = 5
-input_frame.columnconfigure(0, weight=1)
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame['relief'] = 'raised'
+        self.main_frame['padding'] = 5
+        self.main_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.main_frame.columnconfigure(0, weight=1)
+        self.main_frame.rowconfigure(0, weight=1)
+        self.main_frame.rowconfigure(1, weight=1)
+        self.main_frame.rowconfigure(2, weight=1)
 
-input_text = Text(input_frame, width=40, height=10)
-input_text.grid(column=0, row=0, sticky=(N,S,E,W))
+        self.input_frame = ttk.Labelframe(self.main_frame, text='Input')
+        self.input_frame['relief'] = 'raised'
+        self.input_frame['height'] = 50
+        self.input_frame['padding'] = 5
+        self.input_frame.columnconfigure(0, weight=1)
 
+        self.input_text = Text(self.input_frame, width=40, height=10)
+        self.input_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
-re_frame = ttk.Labelframe(main_frame, text='Regular Expression')
-re_frame['relief'] = 'raised'
-re_frame['height'] = 50
-re_frame.columnconfigure(0, weight=1, pad=20)
-re_frame.rowconfigure(0, pad=20)
+        self.re_frame = ttk.Labelframe(self.main_frame, text='Regular Expression')
+        self.re_frame['relief'] = 'raised'
+        self.re_frame['height'] = 50
+        self.re_frame.columnconfigure(0, weight=1, pad=20)
+        self.re_frame.rowconfigure(0, pad=20)
 
-re_text = Text(re_frame, width=40, height=2)
-re_text.grid(column=0, row=0, sticky=(N,S,E,W))
+        self.re_text = Text(self.re_frame, width=40, height=2)
+        self.re_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
-re_execute_button = ttk.Button(re_frame, text='Execute')
-re_execute_button.grid(column=1, row=0, sticky=(E,), padx=5)
+        self.re_execute_button = ttk.Button(self.re_frame, text='Execute')
+        self.re_execute_button.grid(column=1, row=0, sticky=(E,), padx=5)
 
-output_frame = ttk.Labelframe(main_frame, text='Output')
-output_frame['relief'] = 'raised'
-output_frame['height'] = 50
-output_frame.columnconfigure(0, weight=1)
+        self.output_frame = ttk.Labelframe(self.main_frame, text='Output')
+        self.output_frame['relief'] = 'raised'
+        self.output_frame['height'] = 50
+        self.output_frame.columnconfigure(0, weight=1)
 
-output_text = Text(output_frame, width=40, height=10)
-output_text.grid(column=0, row=0, sticky=(N,W,E,W))
+        self.output_text = Text(self.output_frame, width=40, height=10)
+        self.output_text.grid(column=0, row=0, sticky=(N, W, E, W))
 
+        self.input_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.re_frame.grid(column=0, row=1, sticky=(N, S, E, W))
+        self.output_frame.grid(column=0, row=2, sticky=(N, S, E, W))
 
+    def execute_button_command(self, command):
+        self.re_execute_button['command'] = lambda: command(self)
 
-input_frame.grid(column=0, row=0, sticky=(N,S,E,W))
-re_frame.grid(column=0, row=1, sticky=(N,S,E,W))
-output_frame.grid(column=0, row=2, sticky=(N,S,E,W))
+    def output_text_clear(self):
+        self.output_text.delete('1.0', END)
+
+    def re_text_get(self):
+        re_text = self.re_text.get('1.0', END)
+        re_text = re_text[0:-1]  # tk text widget seems to append an extra \n
+        return re_text
+
+    def input_text_get(self):
+        text = self.input_text.get('1.0', END)
+        text = text[0:-1]  # tk text widget seems to append an extra \n
+        return text
+
+    def output_text_append(self, text):
+        self.output_text.insert(END, text)
+
+    def main_loop(self):
+        self.root.mainloop()
 
 
 def match_to_string(match):
     if match is None:
         return None
-    str = ''
-    print('match[0] len: ', len(match[0]))
-    str = str + match[0] + '\n'
+    string = ''
+    string = string + match[0] + '\n'
     for group in match.groups():
-        str = str + 'group: ' + group + '\n'
-    return str
+        string = string + 'group: ' + group + '\n'
+    return string
 
 
+def re_execute_button_command(view_model):
+    view_model.output_text_clear()  # clear the output text first in case something goes wrong.
 
-def re_execute_button_command():
-    # clear output results first
-    output_text.delete('1.0', END)
-
-    # make sure we have a valid regex
-    regex = re_text.get('1.0', END)
-    regex = regex[0:-1] # tk text widget seems to append an extra \n
+    regex = view_model.re_text_get()
     pattern = re.compile(regex)
 
-    # get the input string
-    text = input_text.get('1.0', END)
-    text = text[0:-1]   # tk text widget seems to append an extra \n
-    print('text len', len(text))
-    # execute the regex
-    print('execute')
+    text = view_model.input_text_get()
     for match in pattern.finditer(text):
         match_as_string = match_to_string(match)
-        # output the results
         if match_as_string is None:
             match_as_string = 'No match'
-        output_text.insert(END, match_as_string)
-
-re_execute_button['command'] = re_execute_button_command
+        view_model.output_text_append(match_as_string)
 
 
-
-root.mainloop()
+app_view_model = ViewModel()
+app_view_model.execute_button_command(re_execute_button_command)
+app_view_model.main_loop()
