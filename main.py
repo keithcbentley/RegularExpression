@@ -117,10 +117,11 @@ class ViewModel:
 def match_to_string(match):
     if match is None:
         return None
+    group_format = 'group {0}: -->{1}<--\n'
     string = ''
-    string = string + match[0] + '\n'
-    for group in match.groups():
-        string = string + 'group: ' + group + '\n'
+    string = string + group_format.format(0, match[0])
+    for index, group in enumerate(match.groups()):
+        string = string + group_format.format(index+1, group)
     return string
 
 
@@ -135,6 +136,7 @@ def re_execute_button_command(view_model):
         match_as_string = match_to_string(match)
         if match_as_string is None:
             match_as_string = 'No match'
+        view_model.output_text_append('Match:\n')
         view_model.output_text_append(match_as_string)
 
 
