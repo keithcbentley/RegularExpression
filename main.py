@@ -24,8 +24,7 @@ Dotall flag
 No match output result separate from output text box.
 Displaying match results will become more complex.
 Match Expand results
-
-Compile by default
+Show/Hide trailing newlines
 
 Testing????
 
@@ -115,13 +114,24 @@ class ViewModel:
 
 
 def match_to_string(match):
-    if match is None:
-        return None
-    group_format = 'group {0}: -->{1}<--\n'
     string = ''
+    string += 'Match:\n'
+    if match is None:
+        string += 'None\n'
+        return string
+    string += 'Numbered groups:\n'
+    group_format = 'group {0}: -->{1}<--\n'
     string = string + group_format.format(0, match[0])
     for index, group in enumerate(match.groups()):
         string = string + group_format.format(index+1, group)
+
+    string += 'Named groups:\n'
+    named_groups = match.groupdict()
+    if len(named_groups) == 0:
+        string += 'None\n'
+    else:
+        for key,value in named_groups.items():
+            string += group_format.format(key,value)
     return string
 
 
@@ -134,9 +144,6 @@ def re_execute_button_command(view_model):
     text = view_model.input_text_get()
     for match in pattern.finditer(text):
         match_as_string = match_to_string(match)
-        if match_as_string is None:
-            match_as_string = 'No match'
-        view_model.output_text_append('Match:\n')
         view_model.output_text_append(match_as_string)
 
 
