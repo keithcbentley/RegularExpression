@@ -25,6 +25,7 @@ No match output result separate from output text box.
 Displaying match results will become more complex.
 Match Expand results
 Show/Hide trailing newlines
+Show pattern info
 
 Testing????
 
@@ -113,6 +114,18 @@ class ViewModel:
         self.root.mainloop()
 
 
+def none_to_empty(string):
+    if string is None:
+        return ''
+    return string
+
+
+def none_to_space_none(string):
+    if string is None:
+        return ' None'
+    return ''
+
+
 def match_to_string(match):
     string = ''
     string += 'Match:\n'
@@ -120,10 +133,10 @@ def match_to_string(match):
         string += 'None\n'
         return string
     string += 'Numbered groups:\n'
-    group_format = 'group {0}: -->{1}<--\n'
-    string = string + group_format.format(0, match[0])
+    group_format = 'group {0}: -->{1}<--{2}\n'
+    string = string + group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
     for index, group in enumerate(match.groups()):
-        string = string + group_format.format(index+1, group)
+        string = string + group_format.format(index+1, none_to_empty(group), none_to_space_none(group))
 
     string += 'Named groups:\n'
     named_groups = match.groupdict()
@@ -131,7 +144,7 @@ def match_to_string(match):
         string += 'None\n'
     else:
         for key,value in named_groups.items():
-            string += group_format.format(key,value)
+            string += group_format.format(key, none_to_empty(value), none_to_space_none(value))
     return string
 
 
