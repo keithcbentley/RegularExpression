@@ -134,9 +134,11 @@ def match_to_string(match):
         return string
     string += 'Numbered groups:\n'
     group_format = 'group {0}: -->{1}<--{2}\n'
-    string = string + group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
+    string += group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
+    string += 'span: ' + str(match.span(0)) + '\n'
     for index, group in enumerate(match.groups()):
-        string = string + group_format.format(index+1, none_to_empty(group), none_to_space_none(group))
+        string += group_format.format(index+1, none_to_empty(group), none_to_space_none(group))
+        string += 'span: ' + str(match.span(index+1)) + '\n'
 
     string += 'Named groups:\n'
     named_groups = match.groupdict()
@@ -145,6 +147,7 @@ def match_to_string(match):
     else:
         for key,value in named_groups.items():
             string += group_format.format(key, none_to_empty(value), none_to_space_none(value))
+            string += 'span: ' + str(match.span(key)) + '\n'
     return string
 
 
