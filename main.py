@@ -74,11 +74,14 @@ class ViewModel:
         self.re_text = Text(self.re_frame, width=40, height=2)
         self.re_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
-        self.re_execute_button = ttk.Button(self.re_frame, text='Execute')
-        self.re_execute_button.grid(column=1, row=0, sticky=(N,E,), padx=5)
+        self.re_execute_frame = ttk.Frame(self.re_frame)
+        self.re_execute_frame.grid(column=1, row=0, padx = 5, sticky = (N, S, E, W))
+
+        self.re_execute_button = ttk.Button(self.re_execute_frame, text='Execute')
+        self.re_execute_button.grid(column=1, row=0, sticky=(N,E,W), padx=5)
 
         self.re_ignore_case = BooleanVar()
-        self.re_ignore_case_checkbox = ttk.Checkbutton(self.re_frame, text='Ignore Case', variable=self.re_ignore_case)
+        self.re_ignore_case_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Ignore Case', variable=self.re_ignore_case)
         self.re_ignore_case_checkbox.grid(column=1, row=1, sticky=(N, W), padx=5)
 
         self.output_frame = ttk.Labelframe(self.main_frame, text='Output')
