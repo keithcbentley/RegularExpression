@@ -60,7 +60,6 @@ class ViewModel:
 
         self.input_frame = ttk.Labelframe(self.main_frame, text='Input')
         self.input_frame['relief'] = 'raised'
-        self.input_frame['height'] = 50
         self.input_frame['padding'] = 5
         self.input_frame.columnconfigure(0, weight=1)
 
@@ -69,7 +68,6 @@ class ViewModel:
 
         self.re_frame = ttk.Labelframe(self.main_frame, text='Regular Expression')
         self.re_frame['relief'] = 'raised'
-        self.re_frame['height'] = 50
         self.re_frame.columnconfigure(0, weight=1, pad=20)
         self.re_frame.rowconfigure(0, pad=20)
 
@@ -77,15 +75,18 @@ class ViewModel:
         self.re_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
         self.re_execute_button = ttk.Button(self.re_frame, text='Execute')
-        self.re_execute_button.grid(column=1, row=0, sticky=(E,), padx=5)
+        self.re_execute_button.grid(column=1, row=0, sticky=(N,E,), padx=5)
+
+        self.re_ignore_case = BooleanVar()
+        self.re_ignore_case_checkbox = ttk.Checkbutton(self.re_frame, text='Ignore Case', variable=self.re_ignore_case)
+        self.re_ignore_case_checkbox.grid(column=1, row=1, sticky=(N, W), padx=5)
 
         self.output_frame = ttk.Labelframe(self.main_frame, text='Output')
         self.output_frame['relief'] = 'raised'
-        self.output_frame['height'] = 50
         self.output_frame.columnconfigure(0, weight=1)
 
         self.output_text = Text(self.output_frame, width=40, height=10)
-        self.output_text.grid(column=0, row=0, sticky=(N, W, E, W))
+        self.output_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
         self.input_frame.grid(column=0, row=0, sticky=(N, S, E, W))
         self.re_frame.grid(column=0, row=1, sticky=(N, S, E, W))
@@ -101,6 +102,9 @@ class ViewModel:
         re_text = self.re_text.get('1.0', END)
         re_text = re_text[0:-1]  # tk text widget seems to append an extra \n
         return re_text
+
+    def re_ignore_case_get(self):
+        return self.re_ignore_case.get()
 
     def input_text_get(self):
         text = self.input_text.get('1.0', END)
@@ -151,11 +155,19 @@ def match_to_string(match):
     return string
 
 
+def view_model_regex_flags(view_model):
+    flags = 0
+    if view_model.re_ignore_case_get():
+        flags |= re.IGNORECASE
+    return flags
+
+
 def re_execute_button_command(view_model):
     view_model.output_text_clear()  # clear the output text first in case something goes wrong.
 
     regex = view_model.re_text_get()
-    pattern = re.compile(regex)
+    regex_flags = view_model_regex_flags(view_model)
+    pattern = re.compile(regex, regex_flags)
 
     text = view_model.input_text_get()
     for match in pattern.finditer(text):
