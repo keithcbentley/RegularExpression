@@ -78,11 +78,15 @@ class ViewModel:
         self.re_execute_frame.grid(column=1, row=0, padx = 5, sticky = (N, S, E, W))
 
         self.re_execute_button = ttk.Button(self.re_execute_frame, text='Execute')
-        self.re_execute_button.grid(column=1, row=0, sticky=(N,E,W), padx=5)
+        self.re_execute_button.grid(column=0, row=0, sticky=(N,E,W), padx=5)
 
-        self.re_ignore_case = BooleanVar()
-        self.re_ignore_case_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Ignore Case', variable=self.re_ignore_case)
-        self.re_ignore_case_checkbox.grid(column=1, row=1, sticky=(N, W), padx=5)
+        self.re_ignore_case_var = BooleanVar()
+        self.re_ignore_case_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Ignore Case', variable=self.re_ignore_case_var)
+        self.re_ignore_case_checkbox.grid(column=0, row=1, sticky=(N, W), padx=5)
+
+        self.re_verbose_var = BooleanVar()
+        self.re_verbose_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Verbose', variable=self.re_verbose_var)
+        self.re_verbose_checkbox.grid(column=0, row=2, sticky=(N, W), padx=5)
 
         self.output_frame = ttk.Labelframe(self.main_frame, text='Output')
         self.output_frame['relief'] = 'raised'
@@ -107,7 +111,10 @@ class ViewModel:
         return re_text
 
     def re_ignore_case_get(self):
-        return self.re_ignore_case.get()
+        return self.re_ignore_case_var.get()
+
+    def re_verbose_get(self):
+        return self.re_verbose_var.get()
 
     def input_text_get(self):
         text = self.input_text.get('1.0', END)
@@ -162,6 +169,8 @@ def view_model_regex_flags(view_model):
     flags = 0
     if view_model.re_ignore_case_get():
         flags |= re.IGNORECASE
+    if view_model.re_verbose_get():
+        flags |= re.VERBOSE
     return flags
 
 
