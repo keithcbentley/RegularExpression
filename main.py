@@ -185,32 +185,55 @@ def match_to_string(match):
     return string
 
 
-def view_model_regex_flags(view_model):
-    flags = 0
-    if view_model.re_ignore_case_get():
-        flags |= re.IGNORECASE
-    if view_model.re_verbose_get():
-        flags |= re.VERBOSE
-    if view_model.re_multiline_get():
-        flags |= re.MULTILINE
-    if view_model.re_dotall_get():
-        flags |= re.DOTALL
-    return flags
+
+
+class ViewModelAdapter:
+    def __init__(self, view_model):
+        self.view_model = view_model
+        self.output_string = None
+
+    def regex_flags(self):
+        flags = 0
+        if self.view_model.re_ignore_case_get():
+            flags |= re.IGNORECASE
+        if self.view_model.re_verbose_get():
+            flags |= re.VERBOSE
+        if self.view_model.re_multiline_get():
+            flags |= re.MULTILINE
+        if self.view_model.re_dotall_get():
+            flags |= re.DOTALL
+        return flags
+
+    def begin_output(self):
+        self.view_model.output_text_clear()
+        self.output_string = ''
+
+    def append_output(self,string):
+        self.output_string += string
+
+    def end_output(self):
+        self.view_model.output_text_append(self.output_string)
 
 
 def re_execute_button_command(view_model):
-    view_model.output_text_clear()  # clear the output text first in case something goes wrong.
+    view_model_adapter = ViewModelAdapter(view_model)
+    view_model_adapter.begin_output()
 
     regex = view_model.re_text_get()
-    regex_flags = view_model_regex_flags(view_model)
+    regex_flags = view_model_adapter.regex_flags()
     pattern = re.compile(regex, regex_flags)
 
     text = view_model.input_text_get()
     for match in pattern.finditer(text):
         match_as_string = match_to_string(match)
-        view_model.output_text_append(match_as_string)
+        view_model_adapter.append_output(match_as_string)
+
+    view_model_adapter.end_output()
+
+def main():
+    app_view_model = ViewModel()
+    app_view_model.execute_button_command(re_execute_button_command)
+    app_view_model.main_loop()
 
 
-app_view_model = ViewModel()
-app_view_model.execute_button_command(re_execute_button_command)
-app_view_model.main_loop()
+main()
