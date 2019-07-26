@@ -80,6 +80,9 @@ class ViewModel:
         self.re_execute_button = ttk.Button(self.re_execute_frame, text='Execute')
         self.re_execute_button.grid(column=0, row=0, sticky=(N,E,W), padx=5)
 
+        # There appears to be a bug with the checkbox.  Without a BooleanVar,
+        # it always shows as the 'alternate' state, regardless of how the state is set.
+        # Using a BooleanVar seems to fix this.
         self.re_ignore_case_var = BooleanVar()
         self.re_ignore_case_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Ignore Case', variable=self.re_ignore_case_var)
         self.re_ignore_case_checkbox.grid(column=0, row=1, sticky=(N, W), padx=5)
@@ -87,6 +90,14 @@ class ViewModel:
         self.re_verbose_var = BooleanVar()
         self.re_verbose_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Verbose', variable=self.re_verbose_var)
         self.re_verbose_checkbox.grid(column=0, row=2, sticky=(N, W), padx=5)
+
+        self.re_multiline_var = BooleanVar()
+        self.re_multiline_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Multiline', variable=self.re_multiline_var)
+        self.re_multiline_checkbox.grid(column=0, row=3, sticky=(N, W), padx = 5)
+
+        self.re_dotall_var = BooleanVar()
+        self.re_dotall_checkbox = ttk.Checkbutton(self.re_execute_frame, text='Dotall', variable=self.re_dotall_var)
+        self.re_dotall_checkbox.grid(column=0, row=4, sticky=(N, W), padx=5)
 
         self.output_frame = ttk.Labelframe(self.main_frame, text='Output')
         self.output_frame['relief'] = 'raised'
@@ -115,6 +126,12 @@ class ViewModel:
 
     def re_verbose_get(self):
         return self.re_verbose_var.get()
+
+    def re_multiline_get(self):
+        return self.re_multiline_var.get()
+
+    def re_dotall_get(self):
+        return self.re_dotall_var.get()
 
     def input_text_get(self):
         text = self.input_text.get('1.0', END)
@@ -171,6 +188,10 @@ def view_model_regex_flags(view_model):
         flags |= re.IGNORECASE
     if view_model.re_verbose_get():
         flags |= re.VERBOSE
+    if view_model.re_multiline_get():
+        flags |= re.MULTILINE
+    if view_model.re_dotall_get():
+        flags |= re.DOTALL
     return flags
 
 
