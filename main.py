@@ -62,14 +62,18 @@ class ViewModel:
         self.input_frame['relief'] = 'raised'
         self.input_frame['padding'] = 5
         self.input_frame.columnconfigure(0, weight=1)
+        self.input_frame.rowconfigure(0, weight=1)
+        self.input_frame.grid(column=0, row=0, sticky=(N, S, E, W))
 
         self.input_text = Text(self.input_frame, width=40, height=10)
         self.input_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
         self.re_frame = ttk.Labelframe(self.main_frame, text='Regular Expression')
         self.re_frame['relief'] = 'raised'
+        self.re_frame['padding'] = 5
         self.re_frame.columnconfigure(0, weight=1, pad=20)
-        self.re_frame.rowconfigure(0, pad=20)
+        self.re_frame.rowconfigure(0, weight=1, pad=20)
+        self.re_frame.grid(column=0, row=1, sticky=(N, S, E, W))
 
         self.re_text = Text(self.re_frame, width=40, height=2)
         self.re_text.grid(column=0, row=0, sticky=(N, S, E, W))
@@ -101,14 +105,13 @@ class ViewModel:
 
         self.output_frame = ttk.Labelframe(self.main_frame, text='Output')
         self.output_frame['relief'] = 'raised'
+        self.output_frame['padding'] = 5
         self.output_frame.columnconfigure(0, weight=1)
+        self.output_frame.rowconfigure(0, weight=1)
+        self.output_frame.grid(column=0, row=2, sticky=(N, S, E, W))
 
         self.output_text = Text(self.output_frame, width=40, height=10)
         self.output_text.grid(column=0, row=0, sticky=(N, S, E, W))
-
-        self.input_frame.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.re_frame.grid(column=0, row=1, sticky=(N, S, E, W))
-        self.output_frame.grid(column=0, row=2, sticky=(N, S, E, W))
 
     def execute_button_command(self, command):
         self.re_execute_button['command'] = lambda: command(self)
