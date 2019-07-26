@@ -36,7 +36,7 @@ Make into an object???
 
 """
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, filedialog
 import re
 
 
@@ -67,6 +67,12 @@ class ViewModel:
 
         self.input_text = Text(self.input_frame, width=40, height=10)
         self.input_text.grid(column=0, row=0, sticky=(N, S, E, W))
+
+        self.input_file_frame = ttk.Frame(self.input_frame)
+        self.input_file_frame.grid(column=1, row=0, padx = 5, sticky = (N, S, E, W))
+
+        self.input_file_button = ttk.Button(self.input_file_frame, text='File')
+        self.input_file_button.grid(column=0, row=0, sticky=(N,E,W), padx=5)
 
         self.re_frame = ttk.Labelframe(self.main_frame, text='Regular Expression')
         self.re_frame['relief'] = 'raised'
@@ -116,8 +122,9 @@ class ViewModel:
     def execute_button_command(self, command):
         self.re_execute_button['command'] = lambda: command(self)
 
-    def output_text_clear(self):
-        self.output_text.delete('1.0', END)
+    def file_button_command(self, command):
+        self.input_file_button['command'] = lambda: command(self)
+
 
     def re_text_get(self):
         re_text = self.re_text.get('1.0', END)
@@ -140,6 +147,13 @@ class ViewModel:
         text = self.input_text.get('1.0', END)
         text = text[0:-1]  # tk text widget seems to append an extra \n
         return text
+
+    def input_text_set(self, text):
+        self.input_text.delete('1.0', END)
+        self.input_text.insert(END, text)
+
+    def output_text_clear(self):
+        self.output_text.delete('1.0', END)
 
     def output_text_append(self, text):
         self.output_text.insert(END, text)
@@ -185,9 +199,7 @@ def match_to_string(match):
     return string
 
 
-
-
-class ViewModelAdapter:
+class ViewModelAdapter: # test comment
     def __init__(self, view_model):
         self.view_model = view_model
         self.output_string = None
@@ -230,9 +242,20 @@ def re_execute_button_command(view_model):
 
     view_model_adapter.end_output()
 
+
+def file_button_command(view_model):
+    print("Load file")
+    file_name = filedialog.askopenfilename()
+    print('file_name: ', file_name)
+    file = open(file_name, 'r')
+    contents = file.read()
+    view_model.input_text_set(contents)
+
+
 def main():
     app_view_model = ViewModel()
     app_view_model.execute_button_command(re_execute_button_command)
+    app_view_model.file_button_command(file_button_command)
     app_view_model.main_loop()
 
 
