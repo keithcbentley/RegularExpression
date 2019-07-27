@@ -156,13 +156,17 @@ class ViewModel:
         self.output_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
         self.output_option_frame = ttk.Frame(self.output_frame)
-        self.output_option_frame.grid(column=1, row=0, sticky=(N, W), padx=5)
+        self.output_option_frame.grid(column=1, row=0, sticky=(N, S, E, W), padx=5)
 
-        self.show_match_none_var = BooleanVar()
-        self.show_match_none_var.set(True)
-        self.show_match_checkbox = ttk.Checkbutton(
-            self.output_option_frame, text='Show Match None', variable=self.show_match_none_var)
-        self.show_match_checkbox.grid(column=0, row=0, padx=5)
+        self.hide_match_none_var = BooleanVar()
+        self.hide_match_checkbox = ttk.Checkbutton(
+            self.output_option_frame, text='Hide Match None', variable=self.hide_match_none_var)
+        self.hide_match_checkbox.grid(column=0, row=0, sticky=(N, W), padx=5)
+
+        self.show_input_var = BooleanVar()
+        self.show_input_checkbox = ttk.Checkbutton(
+            self.output_option_frame, text='Show Input', variable=self.show_input_var)
+        self.show_input_checkbox.grid(column=0, row=1, sticky=(N, W), padx=5)
 
     def execute_button_command(self, command):
         self.re_execute_button['command'] = lambda: command(self)
@@ -205,8 +209,11 @@ class ViewModel:
     def output_text_append(self, text):
         self.output_text.insert(END, text)
 
-    def show_match_none(self):
-        return self.show_match_none_var.get()
+    def hide_match_none(self):
+        return self.hide_match_none_var.get()
+
+    def show_input(self):
+        return self.show_input_var.get()
 
     def do_match(self):
         return self.operation_var.get() == self.match_operation_value
@@ -263,7 +270,7 @@ class ViewModelAdapter:
     def end_output(self):
         self.view_model.output_text_append(self.output_string)
 
-    def match_to_string(self, match):
+    def match_to_string(self, match, input_string):
         match_start_string = ':::Match start\n'
         match_end_string = ':::Match end\n'
         numbered_start_string = '  :::Numbered groups start\n'
@@ -272,18 +279,22 @@ class ViewModelAdapter:
         named_end_string = '  :::Named groups end\n'
         string = ''
         if match is None:
-            if self.view_model.show_match_none():
-                string += match_start_string
-                string += '  None\n'
-                string += match_end_string
+            if self.view_model.hide_match_none():
                 return string
+            string += match_start_string
+            if self.view_model.show_input():
+                string += '  input string: ' + input_string + '\n'
+            string += '  None\n'
+            string += match_end_string
             return string
         string += match_start_string
-        string += numbered_start_string
+        if self.view_model.show_input():
+            string += '  input string: ' + input_string + '\n'
         group_format = '    group {0}: -->{1}<--{2}\n'
         span_format = '    span: {0}\n'
         string += group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
         string += '    span: ' + str(match.span(0)) + '\n'
+        string += numbered_start_string
         for index, group in enumerate(match.groups()):
             string += group_format.format(index + 1, none_to_empty(group), none_to_space_none(group))
             string += span_format.format(str(match.span(index + 1)))
@@ -301,8 +312,8 @@ class ViewModelAdapter:
         string += match_end_string
         return string
 
-    def output_match(self, match):
-        match_as_string = self.match_to_string(match)
+    def output_match(self, match, input_string):
+        match_as_string = self.match_to_string(match, input_string)
         self.append_output(match_as_string)
 
 
@@ -322,19 +333,19 @@ def re_execute_button_command(view_model):
     for text in input_text_pieces:
         if view_model.do_match():
             match = pattern.match(text)
-            view_model_adapter.output_match(match)
+            view_model_adapter.output_match(match, text)
 
         if view_model.do_fullmatch():
             match = pattern.fullmatch(text)
-            view_model_adapter.output_match(match)
+            view_model_adapter.output_match(match, text)
 
         if view_model.do_search():
             match = pattern.search(text)
-            view_model_adapter.output_match(match)
+            view_model_adapter.output_match(match, text)
 
         if view_model.do_finditer():
             for match in pattern.finditer(text):
-                view_model_adapter.output_match(match)
+                view_model_adapter.output_match(match, text)
 
     view_model_adapter.end_output()
 
