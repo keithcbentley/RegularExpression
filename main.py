@@ -74,6 +74,11 @@ class ViewModel:
         self.input_file_button = ttk.Button(self.input_file_frame, text='File')
         self.input_file_button.grid(column=0, row=0, sticky=(N, E, W), padx=5)
 
+        self.splitlines_var = BooleanVar()
+        self.input_splitlines_checkbox = ttk.Checkbutton(
+            self.input_file_frame, text='Split lines', variable=self.splitlines_var)
+        self.input_splitlines_checkbox.grid(column=0, row=1, sticky=(W,), padx=5)
+
         self.re_frame = ttk.Labelframe(self.main_frame, text='Regular Expression')
         self.re_frame['relief'] = 'raised'
         self.re_frame['padding'] = 5
@@ -150,6 +155,15 @@ class ViewModel:
         self.output_text = Text(self.output_frame, width=40, height=10)
         self.output_text.grid(column=0, row=0, sticky=(N, S, E, W))
 
+        self.output_option_frame = ttk.Frame(self.output_frame)
+        self.output_option_frame.grid(column=1, row=0, sticky=(N, W), padx=5)
+
+        self.show_match_none_var = BooleanVar()
+        self.show_match_none_var.set(True)
+        self.show_match_checkbox = ttk.Checkbutton(
+            self.output_option_frame, text='Show Match None', variable=self.show_match_none_var)
+        self.show_match_checkbox.grid(column=0, row=0, padx=5)
+
     def execute_button_command(self, command):
         self.re_execute_button['command'] = lambda: command(self)
 
@@ -182,11 +196,17 @@ class ViewModel:
         self.input_text.delete('1.0', END)
         self.input_text.insert(END, text)
 
+    def splitlines_get(self):
+        return self.splitlines_var.get()
+
     def output_text_clear(self):
         self.output_text.delete('1.0', END)
 
     def output_text_append(self, text):
         self.output_text.insert(END, text)
+
+    def show_match_none(self):
+        return self.show_match_none_var.get()
 
     def do_match(self):
         return self.operation_var.get() == self.match_operation_value
@@ -252,9 +272,11 @@ class ViewModelAdapter:
         named_end_string = '  :::Named groups end\n'
         string = ''
         if match is None:
-            string += match_start_string
-            string += '  None\n'
-            string += match_end_string
+            if self.view_model.show_match_none():
+                string += match_start_string
+                string += '  None\n'
+                string += match_end_string
+                return string
             return string
         string += match_start_string
         string += numbered_start_string
@@ -292,23 +314,27 @@ def re_execute_button_command(view_model):
     regex_flags = view_model_adapter.regex_flags()
     pattern = re.compile(regex, regex_flags)
 
-    text = view_model.input_text_get()
-
-    if view_model.do_match():
-        match = pattern.match(text)
-        view_model_adapter.output_match(match)
-
-    if view_model.do_fullmatch():
-        match = pattern.fullmatch(text)
-        view_model_adapter.output_match(match)
-
-    if view_model.do_search():
-        match = pattern.search(text)
-        view_model_adapter.output_match(match)
-
-    if view_model.do_finditer():
-        for match in pattern.finditer(text):
+    input_text = view_model.input_text_get()
+    if view_model.splitlines_get():
+        input_text_pieces = input_text.splitlines(keepends=True)
+    else:
+        input_text_pieces = [input_text]
+    for text in input_text_pieces:
+        if view_model.do_match():
+            match = pattern.match(text)
             view_model_adapter.output_match(match)
+
+        if view_model.do_fullmatch():
+            match = pattern.fullmatch(text)
+            view_model_adapter.output_match(match)
+
+        if view_model.do_search():
+            match = pattern.search(text)
+            view_model_adapter.output_match(match)
+
+        if view_model.do_finditer():
+            for match in pattern.finditer(text):
+                view_model_adapter.output_match(match)
 
     view_model_adapter.end_output()
 
