@@ -163,10 +163,20 @@ class ViewModel:
             self.output_option_frame, text='Hide Match None', variable=self.hide_match_none_var)
         self.hide_match_checkbox.grid(column=0, row=0, sticky=(N, W), padx=5)
 
+        self.hide_capture_groups_var = BooleanVar()
+        self.hide_capture_groups_checkbox = ttk.Checkbutton(
+            self.output_option_frame, text='Hide Capture Groups', variable=self.hide_capture_groups_var)
+        self.hide_capture_groups_checkbox.grid(column=0, row=1, sticky=(N, W), padx=5)
+
+        self.hide_match_information_var = BooleanVar()
+        self.hide_match_information_checkbox = ttk.Checkbutton(
+            self.output_option_frame, text='Hide Match Information', variable=self.hide_match_information_var)
+        self.hide_match_information_checkbox.grid(column=0, row=2, sticky=(N, W), padx=5)
+
         self.show_input_var = BooleanVar()
         self.show_input_checkbox = ttk.Checkbutton(
             self.output_option_frame, text='Show Input', variable=self.show_input_var)
-        self.show_input_checkbox.grid(column=0, row=1, sticky=(N, W), padx=5)
+        self.show_input_checkbox.grid(column=0, row=3, sticky=(N, W), padx=5)
 
     def execute_button_command(self, command):
         self.re_execute_button['command'] = lambda: command(self)
@@ -212,6 +222,12 @@ class ViewModel:
     def hide_match_none(self):
         return self.hide_match_none_var.get()
 
+    def hide_capture_groups(self):
+        return self.hide_capture_groups_var.get()
+
+    def hide_match_information(self):
+        return self.hide_match_information_var.get()
+
     def show_input(self):
         return self.show_input_var.get()
 
@@ -244,6 +260,15 @@ def none_to_space_none(string):
 
 
 class ViewModelAdapter:
+    c_match_start_string = ':::Match start\n'
+    c_match_end_string = ':::Match end\n'
+    c_group_format = '    group {0}: -->{1}<--{2}\n'
+    c_span_format = '    span: {0}\n'
+    c_numbered_start_string = '  :::Numbered groups start\n'
+    c_numbered_end_string = '  :::Numbered groups end\n'
+    c_named_start_string = '  :::Named groups start\n'
+    c_named_end_string = '  :::Named groups end\n'
+
     def __init__(self, view_model):
         self.view_model = view_model
         self.output_string = None
@@ -270,46 +295,73 @@ class ViewModelAdapter:
     def end_output(self):
         self.view_model.output_text_append(self.output_string)
 
-    def match_to_string(self, match, input_string):
-        match_start_string = ':::Match start\n'
-        match_end_string = ':::Match end\n'
-        numbered_start_string = '  :::Numbered groups start\n'
-        numbered_end_string = '  :::Numbered groups end\n'
-        named_start_string = '  :::Named groups start\n'
-        named_end_string = '  :::Named groups end\n'
-        string = ''
-        if match is None:
-            if self.view_model.hide_match_none():
-                return string
-            string += match_start_string
-            if self.view_model.show_input():
-                string += '  input string: ' + input_string + '\n'
-            string += '  None\n'
-            string += match_end_string
-            return string
-        string += match_start_string
-        if self.view_model.show_input():
-            string += '  input string: ' + input_string + '\n'
-        group_format = '    group {0}: -->{1}<--{2}\n'
-        span_format = '    span: {0}\n'
-        string += group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
-        string += '    span: ' + str(match.span(0)) + '\n'
-        string += numbered_start_string
-        for index, group in enumerate(match.groups()):
-            string += group_format.format(index + 1, none_to_empty(group), none_to_space_none(group))
-            string += span_format.format(str(match.span(index + 1)))
-        string += numbered_end_string
+    def clean_input_string(self, input_string):
+        if input_string[-1] == '\n':
+            return '-->' + input_string[0:-1] + ' + \\n<--'
+        return '-->' + input_string + '<--'
 
-        string += named_start_string
+    def input_string_string(self, input_string):
+        if self.view_model.show_input():
+            return '  input string: ' + self.clean_input_string(input_string) + '\n'
+        return ''
+
+    def match_none_string(self, input_string):
+        if self.view_model.hide_match_none():
+            return ''
+        string = ''
+        string += self.match_start_string()
+        string += self.input_string_string(input_string)
+        string += '  None\n'
+        string += self.match_end_string()
+        return string
+
+    def match_start_string(self):
+        if self.view_model.hide_match_information():
+            return ''
+        return self.c_match_start_string
+
+    def match_content_string(self, match):
+        if self.view_model.hide_match_information():
+            return ''
+        string = ''
+        string += self.c_group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
+        string += self.c_span_format.format(str(match.span(0)))
+        return string
+
+    def match_end_string(self):
+        if self.view_model.hide_match_information():
+            return ''
+        return self.c_match_end_string
+
+    def content_groups_string(self, match):
+        if self.view_model.hide_capture_groups():
+            return ''
+        string = ''
+        string += self.c_numbered_start_string
+        for index, group in enumerate(match.groups()):
+            string += self.c_group_format.format(index + 1, none_to_empty(group), none_to_space_none(group))
+            string += self.c_span_format.format(str(match.span(index + 1)))
+        string += self.c_numbered_end_string
+        string += self.c_named_start_string
         named_groups = match.groupdict()
         if len(named_groups) == 0:
             string += '    None\n'
         else:
             for key, value in named_groups.items():
-                string += group_format.format(key, none_to_empty(value), none_to_space_none(value))
-                string += span_format.format(str(match.span(key)))
-        string += named_end_string
-        string += match_end_string
+                string += self.c_group_format.format(key, none_to_empty(value), none_to_space_none(value))
+                string += self.c_span_format.format(str(match.span(key)))
+        string += self.c_named_end_string
+        return string
+
+    def match_to_string(self, match, input_string):
+        if match is None:
+            return self.match_none_string(input_string)
+        string = ''
+        string += self.match_start_string()
+        string += self.input_string_string(input_string)
+        string += self.match_content_string(match)
+        string += self.content_groups_string(match)
+        string += self.match_end_string()
         return string
 
     def output_match(self, match, input_string):
