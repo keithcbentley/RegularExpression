@@ -159,9 +159,9 @@ class ViewModel:
         self.output_option_frame.grid(column=1, row=0, sticky=(N, S, E, W), padx=5)
 
         self.hide_match_none_var = BooleanVar()
-        self.hide_match_checkbox = ttk.Checkbutton(
+        self.hide_match_none_checkbox = ttk.Checkbutton(
             self.output_option_frame, text='Hide Match None', variable=self.hide_match_none_var)
-        self.hide_match_checkbox.grid(column=0, row=0, sticky=(N, W), padx=5)
+        self.hide_match_none_checkbox.grid(column=0, row=0, sticky=(N, W), padx=5)
 
         self.hide_capture_groups_var = BooleanVar()
         self.hide_capture_groups_checkbox = ttk.Checkbutton(
