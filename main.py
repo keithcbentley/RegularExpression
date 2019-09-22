@@ -1,40 +1,3 @@
-"""
-
-
-Input Text
-Regular Expression
-Result
-
-Input text window, input text from file, get input text from file directly
-Regular expression, regular expression options, match command button
-Output text window, options for output results
-
-Search, Match, Fullmatch, Split, Findall, Sub, Subn functionality options (radio buttons)
-
-Display pattern information after compile
-
-Escape functionality in Regular Expression section.  Show escaped string.
-
-Verbose flag
-Debug flag
-IgnoreCase flag
-Multiline flag
-Dotall flag
-
-No match output result separate from output text box.
-Displaying match results will become more complex.
-Match Expand results
-Show/Hide trailing newlines
-Show pattern info
-
-Testing????
-
-View Model???
-
-Make into an object???
-
-
-"""
 from tkinter import *
 from tkinter import ttk, filedialog
 import re
@@ -177,11 +140,12 @@ class ViewModel:
         self.show_input_checkbox = ttk.Checkbutton(
             self.output_option_frame, text='Show Input', variable=self.show_input_var)
         self.show_input_checkbox.grid(column=0, row=3, sticky=(N, W), padx=5)
+        # End of __init__.  This has created everything in the ui itself.
 
-    def execute_button_command(self, command):
+    def execute_button_set_command(self, command):
         self.re_execute_button['command'] = lambda: command(self)
 
-    def file_button_command(self, command):
+    def file_button_set_command(self, command):
         self.input_file_button['command'] = lambda: command(self)
 
     def re_text_get(self):
@@ -219,28 +183,28 @@ class ViewModel:
     def output_text_append(self, text):
         self.output_text.insert(END, text)
 
-    def hide_match_none(self):
+    def hide_match_none_get(self):
         return self.hide_match_none_var.get()
 
-    def hide_capture_groups(self):
+    def hide_capture_groups_get(self):
         return self.hide_capture_groups_var.get()
 
-    def hide_match_information(self):
+    def hide_match_information_get(self):
         return self.hide_match_information_var.get()
 
-    def show_input(self):
+    def show_input_get(self):
         return self.show_input_var.get()
 
-    def do_match(self):
+    def do_match_get(self):
         return self.operation_var.get() == self.match_operation_value
 
-    def do_fullmatch(self):
+    def do_fullmatch_get(self):
         return self.operation_var.get() == self.fullmatch_operation_value
 
-    def do_search(self):
+    def do_search_get(self):
         return self.operation_var.get() == self.search_operation_value
 
-    def do_finditer(self):
+    def do_finditer_get(self):
         return self.operation_var.get() == self.finditer_operation_value
 
     def main_loop(self):
@@ -269,7 +233,7 @@ class ViewModelAdapter:
     c_named_start_string = '  :::Named groups start\n'
     c_named_end_string = '  :::Named groups end\n'
 
-    def __init__(self, view_model):
+    def __init__(self, view_model: ViewModel):
         self.view_model = view_model
         self.output_string = None
 
@@ -295,18 +259,19 @@ class ViewModelAdapter:
     def end_output(self):
         self.view_model.output_text_append(self.output_string)
 
-    def clean_input_string(self, input_string):
+    @staticmethod
+    def clean_input_string(input_string):
         if input_string[-1] == '\n':
             return '-->' + input_string[0:-1] + ' + \\n<--'
         return '-->' + input_string + '<--'
 
     def input_string_string(self, input_string):
-        if self.view_model.show_input():
-            return '  input string: ' + self.clean_input_string(input_string) + '\n'
+        if self.view_model.show_input_get():
+            return '  input string: ' + ViewModelAdapter.clean_input_string(input_string) + '\n'
         return ''
 
     def match_none_string(self, input_string):
-        if self.view_model.hide_match_none():
+        if self.view_model.hide_match_none_get():
             return ''
         string = ''
         string += self.match_start_string()
@@ -316,12 +281,12 @@ class ViewModelAdapter:
         return string
 
     def match_start_string(self):
-        if self.view_model.hide_match_information():
+        if self.view_model.hide_match_information_get():
             return ''
         return self.c_match_start_string
 
     def match_content_string(self, match):
-        if self.view_model.hide_match_information():
+        if self.view_model.hide_match_information_get():
             return ''
         string = ''
         string += self.c_group_format.format(0, none_to_empty(match[0]), none_to_space_none(match[0]))
@@ -329,12 +294,12 @@ class ViewModelAdapter:
         return string
 
     def match_end_string(self):
-        if self.view_model.hide_match_information():
+        if self.view_model.hide_match_information_get():
             return ''
         return self.c_match_end_string
 
     def content_groups_string(self, match):
-        if self.view_model.hide_capture_groups():
+        if self.view_model.hide_capture_groups_get():
             return ''
         string = ''
         string += self.c_numbered_start_string
@@ -383,19 +348,19 @@ def re_execute_button_command(view_model):
     else:
         input_text_pieces = [input_text]
     for text in input_text_pieces:
-        if view_model.do_match():
+        if view_model.do_match_get():
             match = pattern.match(text)
             view_model_adapter.output_match(match, text)
 
-        if view_model.do_fullmatch():
+        if view_model.do_fullmatch_get():
             match = pattern.fullmatch(text)
             view_model_adapter.output_match(match, text)
 
-        if view_model.do_search():
+        if view_model.do_search_get():
             match = pattern.search(text)
             view_model_adapter.output_match(match, text)
 
-        if view_model.do_finditer():
+        if view_model.do_finditer_get():
             for match in pattern.finditer(text):
                 view_model_adapter.output_match(match, text)
 
@@ -404,15 +369,16 @@ def re_execute_button_command(view_model):
 
 def file_button_command(view_model):
     file_name = filedialog.askopenfilename()
-    file = open(file_name, 'r')
-    contents = file.read()
-    view_model.input_text_set(contents)
+    if file_name:
+        file = open(file_name, 'r')
+        contents = file.read()
+        view_model.input_text_set(contents)
 
 
 def main():
     app_view_model = ViewModel()
-    app_view_model.execute_button_command(re_execute_button_command)
-    app_view_model.file_button_command(file_button_command)
+    app_view_model.execute_button_set_command(re_execute_button_command)
+    app_view_model.file_button_set_command(file_button_command)
     app_view_model.main_loop()
 
 
